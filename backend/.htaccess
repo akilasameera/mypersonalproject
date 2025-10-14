@@ -24,6 +24,10 @@ RewriteRule ^api/links/([0-9]+)/([0-9]+)/?$ api/links.php [QSA,L]
 RewriteRule ^api/todos/([0-9]+)/?$ api/todos.php [QSA,L]
 RewriteRule ^api/todos/([0-9]+)/([0-9]+)/?$ api/todos.php [QSA,L]
 
+# VPS Routes
+RewriteRule ^api/vps-notes/?$ api/vps_notes.php [QSA,L]
+RewriteRule ^api/vps-configurations/?$ api/vps_configurations.php [QSA,L]
+
 # Security headers
 Header always set X-Content-Type-Options nosniff
 Header always set X-Frame-Options DENY
