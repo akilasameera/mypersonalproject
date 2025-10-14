@@ -1,0 +1,177 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Modern Calendar Input Styling */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  background: transparent;
+  bottom: 0;
+  color: transparent;
+  cursor: pointer;
+  height: auto;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: auto;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='4' ry='4'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 22px;
+  transition: all 0.3s ease;
+}
+
+input[type="date"]:hover::-webkit-calendar-picker-indicator {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='4' ry='4'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
+  transform: scale(1.1);
+}
+
+input[type="date"]:focus::-webkit-calendar-picker-indicator {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='4' ry='4'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
+  transform: scale(1.15);
+}
+
+/* Hide scrollbars for Gantt chart */
+.gantt-container {
+  overflow: hidden !important;
+}
+
+.gantt-container::-webkit-scrollbar {
+  display: none;
+}
+
+.gantt-container::-webkit-scrollbar-track {
+  display: none;
+}
+
+.gantt-container::-webkit-scrollbar-thumb {
+  display: none;
+}
+
+.gantt-container {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Comprehensive scroll prevention */
+.gantt-no-scroll {
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+}
+
+.gantt-no-scroll * {
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+}
+
+/* Force hide all scrollbars */
+.gantt-container,
+.gantt-container * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.gantt-container::-webkit-scrollbar,
+.gantt-container *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+input[type="date"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-clear-button {
+  display: none;
+}
+
+input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
+  border-radius: 12px;
+}
+
+input[type="date"]::-webkit-datetime-edit-text {
+  color: #9ca3af;
+  padding: 2px 6px;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  color: #1f2937;
+  font-weight: 600;
+  padding: 4px 6px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+input[type="date"]:focus::-webkit-datetime-edit-month-field,
+input[type="date"]:focus::-webkit-datetime-edit-day-field,
+input[type="date"]:focus::-webkit-datetime-edit-year-field {
+  color: #111827;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(147, 51, 234, 0.1));
+  border-radius: 8px;
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+input[type="date"]:hover::-webkit-datetime-edit-month-field,
+input[type="date"]:hover::-webkit-datetime-edit-day-field,
+input[type="date"]:hover::-webkit-datetime-edit-year-field {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(147, 51, 234, 0.05));
+  border-radius: 8px;
+}
+
+/* Modern Calendar Popup Styling */
+input[type="date"] {
+  position: relative;
+  background: linear-gradient(135deg, rgba(249, 250, 251, 0.8), rgba(243, 244, 246, 0.6));
+  border: 2px solid rgba(229, 231, 235, 0.8);
+  border-radius: 16px;
+  padding: 12px 50px 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+input[type="date"]:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(249, 250, 251, 0.8));
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+input[type="date"]:focus {
+  outline: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 1), rgba(249, 250, 251, 0.9));
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 8px 25px rgba(59, 130, 246, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Calendar Popup Animation */
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  animation: calendar-bounce 0.6s ease-in-out;
+}
+
+@keyframes calendar-bounce {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.1) rotate(-5deg); }
+  50% { transform: scale(1.15) rotate(0deg); }
+  75% { transform: scale(1.1) rotate(5deg); }
+}
+
+/* Placeholder styling */
+input[type="date"]:invalid {
+  color: #9ca3af;
+}
+
+input[type="date"]:invalid::-webkit-datetime-edit-month-field,
+input[type="date"]:invalid::-webkit-datetime-edit-day-field,
+input[type="date"]:invalid::-webkit-datetime-edit-year-field {
+  color: #9ca3af;
+  font-style: italic;
+}
