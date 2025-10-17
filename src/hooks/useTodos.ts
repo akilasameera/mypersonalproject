@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { vpsClient } from '../lib/vpsClient';
 import type { Todo } from '../types';
 
 export function useTodos(projectId: string) {
@@ -25,6 +26,23 @@ export function useTodos(projectId: string) {
         .single();
 
       if (error) throw error;
+
+      try {
+        await vpsClient.todos.create({
+          id: data.id,
+          project_id: projectId,
+          title: todoData.title,
+          description: todoData.description || '',
+          completed: todoData.completed || false,
+          priority: todoData.priority || 'medium',
+          due_date: todoData.endDate || null,
+          created_at: data.created_at,
+          updated_at: data.updated_at
+        });
+      } catch (vpsError) {
+        console.warn('VPS sync failed for todo creation:', vpsError);
+      }
+
       return data;
     } catch (error) {
       console.error('Error creating todo:', error);
@@ -54,6 +72,19 @@ export function useTodos(projectId: string) {
         .single();
 
       if (error) throw error;
+
+      try {
+        await vpsClient.todos.update(todoId, {
+          title: updates.title,
+          description: updates.description || '',
+          completed: updates.completed,
+          priority: updates.priority,
+          due_date: updates.endDate || null
+        });
+      } catch (vpsError) {
+        console.warn('VPS sync failed for todo update:', vpsError);
+      }
+
       return data;
     } catch (error) {
       console.error('Error updating todo:', error);
@@ -74,6 +105,13 @@ export function useTodos(projectId: string) {
         .single();
 
       if (error) throw error;
+
+      try {
+        await vpsClient.todos.update(todoId, { completed });
+      } catch (vpsError) {
+        console.warn('VPS sync failed for todo toggle:', vpsError);
+      }
+
       return data;
     } catch (error) {
       console.error('Error toggling todo:', error);
@@ -92,6 +130,12 @@ export function useTodos(projectId: string) {
         .eq('id', todoId);
 
       if (error) throw error;
+
+      try {
+        await vpsClient.todos.delete(todoId);
+      } catch (vpsError) {
+        console.warn('VPS sync failed for todo deletion:', vpsError);
+      }
     } catch (error) {
       console.error('Error deleting todo:', error);
       throw error;

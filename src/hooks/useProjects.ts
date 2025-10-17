@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { vpsClient } from '../lib/vpsClient';
 import type { Project } from '../types';
 
 export function useProjects(userId: string | undefined) {
@@ -169,6 +170,25 @@ export function useProjects(userId: string | undefined) {
         todos: [],
       };
 
+      try {
+        await vpsClient.projects.create({
+          id: data.id,
+          user_id: userId,
+          title: projectData.title,
+          description: projectData.description,
+          color: projectData.color,
+          start_date: projectData.startDate || null,
+          end_date: projectData.endDate || null,
+          status: projectData.status || 'active',
+          priority: projectData.priority || 'medium',
+          progress: 0,
+          created_at: data.created_at,
+          updated_at: data.updated_at
+        });
+      } catch (vpsError) {
+        console.warn('VPS sync failed for project creation:', vpsError);
+      }
+
       setProjects(prev => [newProject, ...prev]);
       return newProject;
     } catch (error) {
@@ -195,8 +215,23 @@ export function useProjects(userId: string | undefined) {
 
       if (error) throw error;
 
-      setProjects(prev => prev.map(project => 
-        project.id === projectId 
+      try {
+        await vpsClient.projects.update(projectId, {
+          title: updates.title,
+          description: updates.description,
+          color: updates.color,
+          start_date: updates.startDate || null,
+          end_date: updates.endDate || null,
+          status: updates.status,
+          priority: updates.priority,
+          progress: updates.progress
+        });
+      } catch (vpsError) {
+        console.warn('VPS sync failed for project update:', vpsError);
+      }
+
+      setProjects(prev => prev.map(project =>
+        project.id === projectId
           ? { ...project, ...data }
           : project
       ));
@@ -216,6 +251,12 @@ export function useProjects(userId: string | undefined) {
         .eq('id', projectId);
 
       if (error) throw error;
+
+      try {
+        await vpsClient.projects.delete(projectId);
+      } catch (vpsError) {
+        console.warn('VPS sync failed for project deletion:', vpsError);
+      }
 
       setProjects(prev => prev.filter(project => project.id !== projectId));
     } catch (error) {

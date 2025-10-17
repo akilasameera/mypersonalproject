@@ -90,6 +90,150 @@ export const vpsClient = {
     }
   },
 
+  // Projects API
+  projects: {
+    async create(project: any) {
+      const headers = await getAuthHeaders();
+      const response = await fetch(`${VPS_API_BASE}/projects`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(project)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create project on VPS');
+      }
+
+      return response.json();
+    },
+
+    async update(id: string, updates: any) {
+      const headers = await getAuthHeaders();
+      const response = await fetch(`${VPS_API_BASE}/projects`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ id, ...updates })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update project on VPS');
+      }
+
+      return response.json();
+    },
+
+    async delete(id: string) {
+      const headers = await getAuthHeaders();
+      const response = await fetch(`${VPS_API_BASE}/projects`, {
+        method: 'DELETE',
+        headers,
+        body: JSON.stringify({ id })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete project on VPS');
+      }
+
+      return response.json();
+    }
+  },
+
+  // Todos API
+  todos: {
+    async create(todo: any) {
+      const headers = await getAuthHeaders();
+      const response = await fetch(`${VPS_API_BASE}/todos`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(todo)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create todo on VPS');
+      }
+
+      return response.json();
+    },
+
+    async update(id: string, updates: any) {
+      const headers = await getAuthHeaders();
+      const response = await fetch(`${VPS_API_BASE}/todos`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ id, ...updates })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update todo on VPS');
+      }
+
+      return response.json();
+    },
+
+    async delete(id: string) {
+      const headers = await getAuthHeaders();
+      const response = await fetch(`${VPS_API_BASE}/todos`, {
+        method: 'DELETE',
+        headers,
+        body: JSON.stringify({ id })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete todo on VPS');
+      }
+
+      return response.json();
+    }
+  },
+
+  // Links API
+  links: {
+    async create(link: any) {
+      const headers = await getAuthHeaders();
+      const response = await fetch(`${VPS_API_BASE}/links`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(link)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create link on VPS');
+      }
+
+      return response.json();
+    },
+
+    async update(id: string, updates: any) {
+      const headers = await getAuthHeaders();
+      const response = await fetch(`${VPS_API_BASE}/links`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ id, ...updates })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update link on VPS');
+      }
+
+      return response.json();
+    },
+
+    async delete(id: string) {
+      const headers = await getAuthHeaders();
+      const response = await fetch(`${VPS_API_BASE}/links`, {
+        method: 'DELETE',
+        headers,
+        body: JSON.stringify({ id })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete link on VPS');
+      }
+
+      return response.json();
+    }
+  },
+
   // Project Configurations API
   configurations: {
     async getByProject(projectId: string) {

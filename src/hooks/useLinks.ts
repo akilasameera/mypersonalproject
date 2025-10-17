@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { vpsClient } from '../lib/vpsClient';
 import type { Link } from '../types';
 
 export function useLinks(projectId: string) {
@@ -22,6 +23,21 @@ export function useLinks(projectId: string) {
         .single();
 
       if (error) throw error;
+
+      try {
+        await vpsClient.links.create({
+          id: data.id,
+          project_id: projectId,
+          title: linkData.title,
+          url: linkData.url,
+          description: linkData.description || '',
+          created_at: data.created_at,
+          updated_at: data.updated_at
+        });
+      } catch (vpsError) {
+        console.warn('VPS sync failed for link creation:', vpsError);
+      }
+
       return data;
     } catch (error) {
       console.error('Error creating link:', error);
@@ -48,6 +64,17 @@ export function useLinks(projectId: string) {
         .single();
 
       if (error) throw error;
+
+      try {
+        await vpsClient.links.update(linkId, {
+          title: updates.title,
+          url: updates.url,
+          description: updates.description || ''
+        });
+      } catch (vpsError) {
+        console.warn('VPS sync failed for link update:', vpsError);
+      }
+
       return data;
     } catch (error) {
       console.error('Error updating link:', error);
@@ -66,6 +93,12 @@ export function useLinks(projectId: string) {
         .eq('id', linkId);
 
       if (error) throw error;
+
+      try {
+        await vpsClient.links.delete(linkId);
+      } catch (vpsError) {
+        console.warn('VPS sync failed for link deletion:', vpsError);
+      }
     } catch (error) {
       console.error('Error deleting link:', error);
       throw error;
