@@ -19,6 +19,22 @@ if (!$supabase_url || !$supabase_service_key) {
 
 echo "Starting migration from Supabase to VPS MySQL...\n\n";
 
+// Function to map Supabase UUID to MySQL integer ID
+$id_mapping = [];
+function getOrCreateMappedId($uuid, $type) {
+    global $id_mapping;
+
+    if (!isset($id_mapping[$type])) {
+        $id_mapping[$type] = [];
+    }
+
+    if (!isset($id_mapping[$type][$uuid])) {
+        $id_mapping[$type][$uuid] = count($id_mapping[$type]) + 1;
+    }
+
+    return $id_mapping[$type][$uuid];
+}
+
 // Function to fetch data from Supabase
 function fetchFromSupabase($table) {
     global $supabase_url, $supabase_service_key;
@@ -44,6 +60,137 @@ function fetchFromSupabase($table) {
     return json_decode($response, true) ?: [];
 }
 
+// Migrate users first (required for foreign keys)
+echo "Migrating users...\n";
+$users = fetchFromSupabase('profiles'); // Supabase typically uses 'profiles' table
+if (empty($users)) {
+    // Try 'users' table if profiles doesn't exist
+    $users = fetchFromSupabase('users');
+}
+
+$stmt = $vps_db->prepare("
+    INSERT INTO users (id, email, full_name, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+        email = VALUES(email),
+        full_name = VALUES(full_name)
+");
+
+foreach ($users as $user) {
+    $user_id = getOrCreateMappedId($user['id'], 'user');
+
+    $stmt->execute([
+        $user_id,
+        $user['email'] ?? 'user' . $user_id . '@example.com',
+        $user['full_name'] ?? $user['name'] ?? 'User ' . $user_id,
+        $user['created_at'] ?? date('Y-m-d H:i:s'),
+        $user['updated_at'] ?? date('Y-m-d H:i:s')
+    ]);
+}
+echo "Migrated " . count($users) . " users\n";
+
+// Migrate projects
+echo "Migrating projects...\n";
+$projects = fetchFromSupabase('projects');
+$stmt = $vps_db->prepare("
+    INSERT INTO projects (id, user_id, title, description, status, priority, start_date, end_date, progress, color, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+        title = VALUES(title),
+        description = VALUES(description),
+        status = VALUES(status),
+        priority = VALUES(priority),
+        start_date = VALUES(start_date),
+        end_date = VALUES(end_date),
+        progress = VALUES(progress),
+        color = VALUES(color)
+");
+
+foreach ($projects as $project) {
+    $project_id = getOrCreateMappedId($project['id'], 'project');
+    $user_id = getOrCreateMappedId($project['user_id'], 'user');
+
+    $stmt->execute([
+        $project_id,
+        $user_id,
+        $project['title'],
+        $project['description'] ?? '',
+        $project['status'] ?? 'active',
+        $project['priority'] ?? 'medium',
+        $project['start_date'] ?? null,
+        $project['end_date'] ?? null,
+        $project['progress'] ?? 0,
+        $project['color'] ?? null,
+        $project['created_at'] ?? date('Y-m-d H:i:s'),
+        $project['updated_at'] ?? date('Y-m-d H:i:s')
+    ]);
+}
+echo "Migrated " . count($projects) . " projects\n";
+
+// Migrate todos
+echo "Migrating todos...\n";
+$todos = fetchFromSupabase('todos');
+$stmt = $vps_db->prepare("
+    INSERT INTO todos (id, user_id, project_id, title, description, completed, priority, due_date, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+        title = VALUES(title),
+        description = VALUES(description),
+        completed = VALUES(completed),
+        priority = VALUES(priority),
+        due_date = VALUES(due_date)
+");
+
+foreach ($todos as $todo) {
+    $todo_id = getOrCreateMappedId($todo['id'], 'todo');
+    $user_id = getOrCreateMappedId($todo['user_id'], 'user');
+    $project_id = $todo['project_id'] ? getOrCreateMappedId($todo['project_id'], 'project') : null;
+
+    $stmt->execute([
+        $todo_id,
+        $user_id,
+        $project_id,
+        $todo['title'],
+        $todo['description'] ?? '',
+        $todo['completed'] ?? false,
+        $todo['priority'] ?? 'medium',
+        $todo['due_date'] ?? null,
+        $todo['created_at'] ?? date('Y-m-d H:i:s'),
+        $todo['updated_at'] ?? date('Y-m-d H:i:s')
+    ]);
+}
+echo "Migrated " . count($todos) . " todos\n";
+
+// Migrate links
+echo "Migrating links...\n";
+$links = fetchFromSupabase('links');
+$stmt = $vps_db->prepare("
+    INSERT INTO links (id, user_id, project_id, title, url, description, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+        title = VALUES(title),
+        url = VALUES(url),
+        description = VALUES(description)
+");
+
+foreach ($links as $link) {
+    $link_id = getOrCreateMappedId($link['id'], 'link');
+    $user_id = getOrCreateMappedId($link['user_id'], 'user');
+    $project_id = $link['project_id'] ? getOrCreateMappedId($link['project_id'], 'project') : null;
+
+    $stmt->execute([
+        $link_id,
+        $user_id,
+        $project_id,
+        $link['title'],
+        $link['url'],
+        $link['description'] ?? '',
+        $link['created_at'] ?? date('Y-m-d H:i:s'),
+        $link['updated_at'] ?? date('Y-m-d H:i:s')
+    ]);
+}
+echo "Migrated " . count($links) . " links\n";
+
 // Migrate notes
 echo "Migrating notes...\n";
 $notes = fetchFromSupabase('notes');
@@ -59,12 +206,13 @@ $stmt = $vps_db->prepare("
 ");
 
 foreach ($notes as $note) {
-    // Extract user_id from project or use a default
-    $user_id = $note['user_id'] ?? 'unknown';
+    $note_id = getOrCreateMappedId($note['id'], 'note');
+    $user_id = getOrCreateMappedId($note['user_id'], 'user');
+    $project_id = $note['project_id'] ? getOrCreateMappedId($note['project_id'], 'project') : null;
 
     $stmt->execute([
-        $note['id'],
-        $note['project_id'],
+        $note_id,
+        $project_id,
         $user_id,
         $note['title'],
         $note['content'],
@@ -91,11 +239,13 @@ $stmt = $vps_db->prepare("
 ");
 
 foreach ($attachments as $attachment) {
-    $user_id = $attachment['user_id'] ?? 'unknown';
+    $attachment_id = getOrCreateMappedId($attachment['id'], 'attachment');
+    $note_id = getOrCreateMappedId($attachment['note_id'], 'note');
+    $user_id = getOrCreateMappedId($attachment['user_id'], 'user');
 
     $stmt->execute([
-        $attachment['id'],
-        $attachment['note_id'],
+        $attachment_id,
+        $note_id,
         $user_id,
         $attachment['name'],
         $attachment['size'],
@@ -121,11 +271,13 @@ $stmt = $vps_db->prepare("
 ");
 
 foreach ($meetings as $meeting) {
-    $user_id = $meeting['user_id'] ?? 'unknown';
+    $meeting_id = getOrCreateMappedId($meeting['id'], 'meeting');
+    $user_id = getOrCreateMappedId($meeting['user_id'], 'user');
+    $project_id = $meeting['project_id'] ? getOrCreateMappedId($meeting['project_id'], 'project') : null;
 
     $stmt->execute([
-        $meeting['id'],
-        $meeting['project_id'],
+        $meeting_id,
+        $project_id,
         $user_id,
         $meeting['title'],
         $meeting['description'] ?? '',
@@ -151,11 +303,13 @@ $stmt = $vps_db->prepare("
 ");
 
 foreach ($transcripts as $transcript) {
-    $user_id = $transcript['user_id'] ?? 'unknown';
+    $transcript_id = getOrCreateMappedId($transcript['id'], 'transcript');
+    $meeting_id = getOrCreateMappedId($transcript['meeting_id'], 'meeting');
+    $user_id = getOrCreateMappedId($transcript['user_id'], 'user');
 
     $stmt->execute([
-        $transcript['id'],
-        $transcript['meeting_id'],
+        $transcript_id,
+        $meeting_id,
         $user_id,
         $transcript['content'],
         $transcript['speaker'] ?? '',
@@ -180,11 +334,13 @@ $stmt = $vps_db->prepare("
 ");
 
 foreach ($summaries as $summary) {
-    $user_id = $summary['user_id'] ?? 'unknown';
+    $summary_id = getOrCreateMappedId($summary['id'], 'summary');
+    $meeting_id = getOrCreateMappedId($summary['meeting_id'], 'meeting');
+    $user_id = getOrCreateMappedId($summary['user_id'], 'user');
 
     $stmt->execute([
-        $summary['id'],
-        $summary['meeting_id'],
+        $summary_id,
+        $meeting_id,
         $user_id,
         $summary['content'],
         $summary['key_points'] ?? '',
@@ -212,11 +368,13 @@ $stmt = $vps_db->prepare("
 ");
 
 foreach ($meeting_todos as $todo) {
-    $user_id = $todo['user_id'] ?? 'unknown';
+    $meeting_todo_id = getOrCreateMappedId($todo['id'], 'meeting_todo');
+    $meeting_id = getOrCreateMappedId($todo['meeting_id'], 'meeting');
+    $user_id = getOrCreateMappedId($todo['user_id'], 'user');
 
     $stmt->execute([
-        $todo['id'],
-        $todo['meeting_id'],
+        $meeting_todo_id,
+        $meeting_id,
         $user_id,
         $todo['title'],
         $todo['description'] ?? '',
@@ -242,9 +400,12 @@ $stmt = $vps_db->prepare("
 ");
 
 foreach ($topics as $topic) {
+    $topic_id = getOrCreateMappedId($topic['id'], 'topic');
+    $user_id = getOrCreateMappedId($topic['user_id'], 'user');
+
     $stmt->execute([
-        $topic['id'],
-        $topic['user_id'],
+        $topic_id,
+        $user_id,
         $topic['title'],
         $topic['description'] ?? '',
         $topic['created_at'] ?? date('Y-m-d H:i:s'),
@@ -265,11 +426,13 @@ $stmt = $vps_db->prepare("
 ");
 
 foreach ($sections as $section) {
-    $user_id = $section['user_id'] ?? 'unknown';
+    $section_id = getOrCreateMappedId($section['id'], 'section');
+    $topic_id = getOrCreateMappedId($section['topic_id'], 'topic');
+    $user_id = getOrCreateMappedId($section['user_id'], 'user');
 
     $stmt->execute([
-        $section['id'],
-        $section['topic_id'],
+        $section_id,
+        $topic_id,
         $user_id,
         $section['title'],
         $section['content'],
@@ -294,11 +457,13 @@ $stmt = $vps_db->prepare("
 ");
 
 foreach ($tiles as $tile) {
-    $user_id = $tile['user_id'] ?? 'unknown';
+    $tile_id = getOrCreateMappedId($tile['id'], 'tile');
+    $section_id = getOrCreateMappedId($tile['section_id'], 'section');
+    $user_id = getOrCreateMappedId($tile['user_id'], 'user');
 
     $stmt->execute([
-        $tile['id'],
-        $tile['section_id'],
+        $tile_id,
+        $section_id,
         $user_id,
         $tile['title'],
         $tile['content'],
@@ -327,11 +492,13 @@ $stmt = $vps_db->prepare("
 ");
 
 foreach ($configs as $config) {
-    $user_id = $config['user_id'] ?? 'unknown';
+    $config_id = getOrCreateMappedId($config['id'], 'config');
+    $project_id = getOrCreateMappedId($config['project_id'], 'project');
+    $user_id = getOrCreateMappedId($config['user_id'], 'user');
 
     $stmt->execute([
-        $config['id'],
-        $config['project_id'],
+        $config_id,
+        $project_id,
         $user_id,
         $config['is_master'] ?? false,
         $config['brd_content'] ?? '',
@@ -361,11 +528,13 @@ $stmt = $vps_db->prepare("
 ");
 
 foreach ($blocks as $block) {
-    $user_id = $block['user_id'] ?? 'unknown';
+    $block_id = getOrCreateMappedId($block['id'], 'block');
+    $config_id = getOrCreateMappedId($block['configuration_id'], 'config');
+    $user_id = getOrCreateMappedId($block['user_id'], 'user');
 
     $stmt->execute([
-        $block['id'],
-        $block['configuration_id'],
+        $block_id,
+        $config_id,
         $user_id,
         $block['block_name'],
         $block['block_order'],
@@ -381,6 +550,10 @@ echo "Migrated " . count($blocks) . " configurator blocks\n";
 
 echo "\n✅ Migration completed successfully!\n";
 echo "Total records migrated:\n";
+echo "  - Users: " . count($users) . "\n";
+echo "  - Projects: " . count($projects) . "\n";
+echo "  - Todos: " . count($todos) . "\n";
+echo "  - Links: " . count($links) . "\n";
 echo "  - Notes: " . count($notes) . "\n";
 echo "  - Attachments: " . count($attachments) . "\n";
 echo "  - Meetings: " . count($meetings) . "\n";
