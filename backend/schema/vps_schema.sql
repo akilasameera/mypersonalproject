@@ -1,8 +1,65 @@
 -- VPS MySQL Database Schema
 -- Heavy tables migrated from Supabase
 
-CREATE DATABASE IF NOT EXISTS projectmanager CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE projectmanager;
+CREATE DATABASE IF NOT EXISTS project_manager CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE project_manager;
+
+-- Users table
+CREATE TABLE IF NOT EXISTS users (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login TIMESTAMP NULL DEFAULT NULL,
+    INDEX idx_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Projects table
+CREATE TABLE IF NOT EXISTS projects (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT DEFAULT '',
+    status VARCHAR(50) DEFAULT 'active',
+    color VARCHAR(20) DEFAULT '#3b82f6',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_user_id (user_id),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Todos table
+CREATE TABLE IF NOT EXISTS todos (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    project_id CHAR(36) NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT DEFAULT '',
+    completed BOOLEAN DEFAULT FALSE,
+    priority VARCHAR(20) DEFAULT 'medium',
+    due_date DATE DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_project_id (project_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_completed (completed),
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Links table
+CREATE TABLE IF NOT EXISTS links (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    project_id CHAR(36) NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    title TEXT NOT NULL,
+    url TEXT NOT NULL,
+    description TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_project_id (project_id),
+    INDEX idx_user_id (user_id),
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Notes table (160 kB) - Large text content
 CREATE TABLE IF NOT EXISTS notes (

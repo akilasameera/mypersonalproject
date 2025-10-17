@@ -1,17 +1,36 @@
 <?php
-// Database configuration
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'project_manager');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+// Load environment variables from .env file
+function loadEnv($path) {
+    if (!file_exists($path)) {
+        return;
+    }
 
-// For production, use environment variables
-if (getenv('DB_HOST')) {
-    define('DB_HOST_PROD', getenv('DB_HOST'));
-    define('DB_NAME_PROD', getenv('DB_NAME'));
-    define('DB_USER_PROD', getenv('DB_USER'));
-    define('DB_PASS_PROD', getenv('DB_PASS'));
+    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0) {
+            continue;
+        }
+
+        list($name, $value) = explode('=', $line, 2);
+        $name = trim($name);
+        $value = trim($value);
+
+        if (!array_key_exists($name, $_ENV)) {
+            putenv(sprintf('%s=%s', $name, $value));
+            $_ENV[$name] = $value;
+            $_SERVER[$name] = $value;
+        }
+    }
 }
+
+// Load .env file
+loadEnv(__DIR__ . '/../.env');
+
+// Database configuration - use VPS credentials from .env
+define('DB_HOST', getenv('VPS_DB_HOST') ?: '127.0.0.1');
+define('DB_NAME', getenv('VPS_DB_NAME') ?: 'project_manager');
+define('DB_USER', getenv('VPS_DB_USER') ?: 'project_user');
+define('DB_PASS', getenv('VPS_DB_PASS') ?: '');
 
 class Database {
     private $connection;
@@ -30,16 +49,10 @@ class Database {
     
     private function connect() {
         try {
-            // Use production settings if available
-            $host = defined('DB_HOST_PROD') ? DB_HOST_PROD : DB_HOST;
-            $dbname = defined('DB_NAME_PROD') ? DB_NAME_PROD : DB_NAME;
-            $username = defined('DB_USER_PROD') ? DB_USER_PROD : DB_USER;
-            $password = defined('DB_PASS_PROD') ? DB_PASS_PROD : DB_PASS;
-            
             $this->connection = new PDO(
-                "mysql:host={$host};dbname={$dbname};charset=utf8mb4",
-                $username,
-                $password,
+                "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
+                DB_USER,
+                DB_PASS,
                 [
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
