@@ -87,7 +87,8 @@ foreach ($users as $user) {
         $user['updated_at'] ?? date('Y-m-d H:i:s')
     ]);
 }
-echo "Migrated " . count($users) . " users\n";
+$user_count = count($users);
+echo "Migrated $user_count users\n";
 
 // Migrate projects
 echo "Migrating projects...\n";
@@ -125,7 +126,8 @@ foreach ($projects as $project) {
         $project['updated_at'] ?? date('Y-m-d H:i:s')
     ]);
 }
-echo "Migrated " . count($projects) . " projects\n";
+$project_count = count($projects);
+echo "Migrated $project_count projects\n";
 
 // Migrate todos
 echo "Migrating todos...\n";
@@ -159,7 +161,8 @@ foreach ($todos as $todo) {
         $todo['updated_at'] ?? date('Y-m-d H:i:s')
     ]);
 }
-echo "Migrated " . count($todos) . " todos\n";
+$todo_count = count($todos);
+echo "Migrated $todo_count todos\n";
 
 // Migrate links
 echo "Migrating links...\n";
@@ -189,7 +192,8 @@ foreach ($links as $link) {
         $link['updated_at'] ?? date('Y-m-d H:i:s')
     ]);
 }
-echo "Migrated " . count($links) . " links\n";
+$link_count = count($links);
+echo "Migrated $link_count links\n";
 
 // Migrate notes
 echo "Migrating notes...\n";
@@ -223,7 +227,8 @@ foreach ($notes as $note) {
         $note['updated_at'] ?? date('Y-m-d H:i:s')
     ]);
 }
-echo "Migrated " . count($notes) . " notes\n";
+$note_count = count($notes);
+echo "Migrated $note_count notes\n";
 
 // Migrate attachments
 echo "Migrating attachments...\n";
@@ -254,7 +259,8 @@ foreach ($attachments as $attachment) {
         $attachment['created_at'] ?? date('Y-m-d H:i:s')
     ]);
 }
-echo "Migrated " . count($attachments) . " attachments\n";
+$attachment_count = count($attachments);
+echo "Migrated $attachment_count attachments\n";
 
 // Migrate meetings
 echo "Migrating meetings...\n";
@@ -288,7 +294,8 @@ foreach ($meetings as $meeting) {
         $meeting['updated_at'] ?? date('Y-m-d H:i:s')
     ]);
 }
-echo "Migrated " . count($meetings) . " meetings\n";
+$meeting_count = count($meetings);
+echo "Migrated $meeting_count meetings\n";
 
 // Migrate meeting transcripts
 echo "Migrating meeting transcripts...\n";
@@ -318,7 +325,8 @@ foreach ($transcripts as $transcript) {
         $transcript['updated_at'] ?? date('Y-m-d H:i:s')
     ]);
 }
-echo "Migrated " . count($transcripts) . " meeting transcripts\n";
+$transcript_count = count($transcripts);
+echo "Migrated $transcript_count meeting transcripts\n";
 
 // Migrate meeting summaries
 echo "Migrating meeting summaries...\n";
@@ -350,7 +358,8 @@ foreach ($summaries as $summary) {
         $summary['updated_at'] ?? date('Y-m-d H:i:s')
     ]);
 }
-echo "Migrated " . count($summaries) . " meeting summaries\n";
+$summary_count = count($summaries);
+echo "Migrated $summary_count meeting summaries\n";
 
 // Migrate meeting todos
 echo "Migrating meeting todos...\n";
@@ -386,7 +395,8 @@ foreach ($meeting_todos as $todo) {
         $todo['updated_at'] ?? date('Y-m-d H:i:s')
     ]);
 }
-echo "Migrated " . count($meeting_todos) . " meeting todos\n";
+$meeting_todo_count = count($meeting_todos);
+echo "Migrated $meeting_todo_count meeting todos\n";
 
 // Migrate knowledge topics
 echo "Migrating knowledge topics...\n";
@@ -412,7 +422,8 @@ foreach ($topics as $topic) {
         $topic['updated_at'] ?? date('Y-m-d H:i:s')
     ]);
 }
-echo "Migrated " . count($topics) . " knowledge topics\n";
+$topic_count = count($topics);
+echo "Migrated $topic_count knowledge topics\n";
 
 // Migrate knowledge sections
 echo "Migrating knowledge sections...\n";
@@ -440,7 +451,8 @@ foreach ($sections as $section) {
         $section['updated_at'] ?? date('Y-m-d H:i:s')
     ]);
 }
-echo "Migrated " . count($sections) . " knowledge sections\n";
+$section_count = count($sections);
+echo "Migrated $section_count knowledge sections\n";
 
 // Migrate knowledge tiles
 echo "Migrating knowledge tiles...\n";
@@ -474,7 +486,8 @@ foreach ($tiles as $tile) {
         $tile['updated_at'] ?? date('Y-m-d H:i:s')
     ]);
 }
-echo "Migrated " . count($tiles) . " knowledge tiles\n";
+$tile_count = count($tiles);
+echo "Migrated $tile_count knowledge tiles\n";
 
 // Migrate project configurations
 echo "Migrating project configurations...\n";
@@ -510,7 +523,8 @@ foreach ($configs as $config) {
         $config['updated_at'] ?? date('Y-m-d H:i:s')
     ]);
 }
-echo "Migrated " . count($configs) . " project configurations\n";
+$config_count = count($configs);
+echo "Migrated $config_count project configurations\n";
 
 // Migrate configurator blocks
 echo "Migrating configurator blocks...\n";
@@ -546,22 +560,23 @@ foreach ($blocks as $block) {
         $block['updated_at'] ?? date('Y-m-d H:i:s')
     ]);
 }
-echo "Migrated " . count($blocks) . " configurator blocks\n";
+$block_count = count($blocks);
+echo "Migrated $block_count configurator blocks\n";
 
 echo "\n✅ Migration completed successfully!\n";
 echo "Total records migrated:\n";
-echo "  - Users: " . count($users) . "\n";
-echo "  - Projects: " . count($projects) . "\n";
-echo "  - Todos: " . count($todos) . "\n";
-echo "  - Links: " . count($links) . "\n";
-echo "  - Notes: " . count($notes) . "\n";
-echo "  - Attachments: " . count($attachments) . "\n";
-echo "  - Meetings: " . count($meetings) . "\n";
-echo "  - Meeting Transcripts: " . count($transcripts) . "\n";
-echo "  - Meeting Summaries: " . count($summaries) . "\n";
-echo "  - Meeting Todos: " . count($meeting_todos) . "\n";
-echo "  - Knowledge Topics: " . count($topics) . "\n";
-echo "  - Knowledge Sections: " . count($sections) . "\n";
-echo "  - Knowledge Tiles: " . count($tiles) . "\n";
-echo "  - Project Configurations: " . count($configs) . "\n";
-echo "  - Configurator Blocks: " . count($blocks) . "\n";
+echo "  - Users: $user_count\n";
+echo "  - Projects: $project_count\n";
+echo "  - Todos: $todo_count\n";
+echo "  - Links: $link_count\n";
+echo "  - Notes: $note_count\n";
+echo "  - Attachments: $attachment_count\n";
+echo "  - Meetings: $meeting_count\n";
+echo "  - Meeting Transcripts: $transcript_count\n";
+echo "  - Meeting Summaries: $summary_count\n";
+echo "  - Meeting Todos: $meeting_todo_count\n";
+echo "  - Knowledge Topics: $topic_count\n";
+echo "  - Knowledge Sections: $section_count\n";
+echo "  - Knowledge Tiles: $tile_count\n";
+echo "  - Project Configurations: $config_count\n";
+echo "  - Configurator Blocks: $block_count\n";
