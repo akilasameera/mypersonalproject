@@ -834,11 +834,6 @@ const KnowledgeBaseView: React.FC = () => {
               <X className="w-6 h-6" />
             </button>
 
-            {/* Fullscreen Label */}
-            <div className="absolute top-4 left-4 z-10 bg-purple-500 text-white px-3 py-2 rounded-lg shadow-lg">
-              <span className="text-sm font-medium">🌐 HTML Preview - Fullscreen</span>
-            </div>
-
             {/* Fullscreen Content */}
             <iframe
               srcDoc={fullscreenContent}
