@@ -18,11 +18,21 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'hold' | 'completed'>('all');
 
-  // Filter projects based on status
-  const filteredProjects = projects.filter(project => {
+  // Separate master project and other projects
+  const masterProject = projects.find(p => p.title.toLowerCase() === 'master');
+  const otherProjects = projects.filter(p => p.title.toLowerCase() !== 'master');
+
+  // Filter non-master projects based on status
+  const filteredOtherProjects = otherProjects.filter(project => {
     if (statusFilter === 'all') return true;
     return project.status === statusFilter;
   });
+
+  // Always include master project if it exists and matches filter
+  const filteredProjects = [
+    ...(masterProject && (statusFilter === 'all' || masterProject.status === statusFilter) ? [masterProject] : []),
+    ...filteredOtherProjects
+  ];
 
   const getStatusCounts = () => {
     return {
@@ -45,9 +55,15 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
     setShowModal(true);
   };
 
-  const handleDeleteProject = (projectId: string) => {
+  const handleDeleteProject = (project: Project) => {
+    // Prevent deletion of Master project
+    if (project.title.toLowerCase() === 'master') {
+      alert('The Master project cannot be deleted as it serves as the template for all projects.');
+      return;
+    }
+
     if (window.confirm('Are you sure you want to delete this project?')) {
-      projectActions.deleteProject(projectId);
+      projectActions.deleteProject(project.id);
     }
   };
 
@@ -174,12 +190,18 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
               ? Math.round((stats.completedTodos / stats.totalTodos) * 100) 
               : 0;
 
+            const isMasterProject = project.title.toLowerCase() === 'master';
+
             return (
               <div
                 key={project.id}
-                className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 hover:shadow-2xl transition-all duration-500 group overflow-hidden hover:scale-105 hover:border-white/80"
+                className={`bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border hover:shadow-2xl transition-all duration-500 group overflow-hidden hover:scale-105 ${
+                  isMasterProject
+                    ? 'border-blue-400 ring-2 ring-blue-200 shadow-blue-100'
+                    : 'border-white/50 hover:border-white/80'
+                }`}
               >
-                <div 
+                <div
                   className="h-1.5 w-full bg-gradient-to-r"
                   style={{ backgroundColor: project.color }}
                 />
@@ -188,6 +210,11 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-2 mb-2">
+                        {isMasterProject && (
+                          <span className="px-2 py-1 rounded-full text-xs font-bold bg-blue-600 text-white">
+                            Master Template
+                          </span>
+                        )}
                         <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
                           project.status === 'active' ? 'bg-green-100 text-green-700' :
                           project.status === 'hold' ? 'bg-yellow-100 text-yellow-700' :
@@ -295,12 +322,14 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
                     >
                       <Edit className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => handleDeleteProject(project.id)}
-                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300 shadow-sm hover:shadow-md"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {project.title.toLowerCase() !== 'master' && (
+                      <button
+                        onClick={() => handleDeleteProject(project)}
+                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300 shadow-sm hover:shadow-md"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
