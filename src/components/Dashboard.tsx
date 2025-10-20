@@ -20,13 +20,15 @@ interface DashboardProps {
   projects: Project[];
   projectActions: any;
   loading: boolean;
+  isAdmin: boolean;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ 
-  user, 
-  projects, 
+const Dashboard: React.FC<DashboardProps> = ({
+  user,
+  projects,
   projectActions,
-  loading
+  loading,
+  isAdmin
 }) => {
   const { signOut } = useAuth();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -226,6 +228,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             projects={projects.filter(p => p.category === 'main')}
             projectActions={projectActions}
             onProjectSelect={handleProjectSelect}
+            isAdmin={isAdmin}
           />
         )}
       </div>

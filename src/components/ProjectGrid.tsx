@@ -7,12 +7,14 @@ interface ProjectGridProps {
   projects: Project[];
   projectActions: any;
   onProjectSelect: (project: Project) => void;
+  isAdmin?: boolean;
 }
 
 const ProjectGrid: React.FC<ProjectGridProps> = ({
   projects,
   projectActions,
-  onProjectSelect
+  onProjectSelect,
+  isAdmin = false
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -209,11 +211,18 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
                 <div className="p-5">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-2">
+                      <div className="flex items-center space-x-2 mb-2 flex-wrap gap-y-1">
                         {isMasterProject && (
-                          <span className="px-2 py-1 rounded-full text-xs font-bold bg-blue-600 text-white">
-                            Master Template
-                          </span>
+                          <>
+                            <span className="px-2 py-1 rounded-full text-xs font-bold bg-blue-600 text-white">
+                              Master Template
+                            </span>
+                            {isAdmin && (
+                              <span className="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                                Admin Only
+                              </span>
+                            )}
+                          </>
                         )}
                         <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
                           project.status === 'active' ? 'bg-green-100 text-green-700' :

@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { vpsClient } from '../lib/vpsClient';
 import type { Project } from '../types';
 
-export function useProjects(userId: string | undefined) {
+export function useProjects(userId: string | undefined, isAdmin: boolean = false) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -11,7 +11,7 @@ export function useProjects(userId: string | undefined) {
     if (userId) {
       fetchProjects();
     }
-  }, [userId]);
+  }, [userId, isAdmin]);
 
   const fetchProjects = async () => {
     try {
@@ -137,7 +137,12 @@ export function useProjects(userId: string | undefined) {
         })) || []
       }));
 
-      setProjects(projectsWithMappedFields);
+      // Filter out Master project for non-admin users
+      const filteredProjects = isAdmin
+        ? projectsWithMappedFields
+        : projectsWithMappedFields.filter(project => project.title.toLowerCase() !== 'master');
+
+      setProjects(filteredProjects);
     } catch (error) {
       console.error('Error fetching projects:', error);
     } finally {

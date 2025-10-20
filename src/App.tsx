@@ -5,8 +5,8 @@ import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
 
 function App() {
-  const { user, loading: authLoading } = useAuth();
-  const { projects, loading: projectsLoading, ...projectActions } = useProjects(user?.id);
+  const { user, loading: authLoading, isAdmin } = useAuth();
+  const { projects, loading: projectsLoading, ...projectActions } = useProjects(user?.id, isAdmin);
 
   if (authLoading) {
     return (
@@ -21,7 +21,7 @@ function App() {
   }
 
   return (
-    <Dashboard 
+    <Dashboard
       user={{
         id: user.id,
         email: user.email || '',
@@ -31,6 +31,7 @@ function App() {
       projects={projects}
       projectActions={projectActions}
       loading={projectsLoading}
+      isAdmin={isAdmin}
     />
   );
 }

@@ -5,6 +5,7 @@ import type { User } from '@supabase/supabase-js';
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     // Get initial session and handle profile creation
@@ -41,9 +42,19 @@ export function useAuth() {
     if (session?.user) {
       // Ensure profile exists before setting user
       await ensureProfileExists(session.user);
+
+      // Fetch admin status
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', session.user.id)
+        .single();
+
+      setIsAdmin(profile?.is_admin || false);
       setUser(session.user);
     } else {
       setUser(null);
+      setIsAdmin(false);
     }
     setLoading(false);
   };
@@ -129,6 +140,7 @@ export function useAuth() {
   return {
     user,
     loading,
+    isAdmin,
     signUp,
     signIn,
     signOut,
