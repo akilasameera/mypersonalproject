@@ -142,19 +142,27 @@ const ConfiguratorTab: React.FC<ConfiguratorTabProps> = ({ projectId, isMasterPr
           updatedAt: block.updated_at
         })));
       } else {
-        // Update existing blocks with master data if they have source_block_id
+        // Update existing blocks with master data
         const blocksWithMasterData = blocksData.map(block => {
+          // Try to find master block by source_block_id first, then by block_order
+          let masterBlock = null;
           if (block.source_block_id) {
-            const masterBlock = masterBlocks.find(mb => mb.id === block.source_block_id);
-            if (masterBlock) {
-              return {
-                ...block,
-                image_url: masterBlock.image_url,
-                image_name: masterBlock.image_name,
-                image_size: masterBlock.image_size,
-                text_content: block.is_read_only ? masterBlock.text_content : block.text_content
-              };
-            }
+            masterBlock = masterBlocks.find(mb => mb.id === block.source_block_id);
+          }
+          if (!masterBlock) {
+            masterBlock = masterBlocks.find(mb => mb.block_order === block.block_order);
+          }
+
+          if (masterBlock && (masterBlock.image_url || masterBlock.text_content)) {
+            return {
+              ...block,
+              image_url: masterBlock.image_url || block.image_url,
+              image_name: masterBlock.image_name || block.image_name,
+              image_size: masterBlock.image_size || block.image_size,
+              text_content: block.is_read_only ? (masterBlock.text_content || block.text_content) : block.text_content,
+              is_read_only: block.is_read_only || !!(masterBlock.image_url || masterBlock.text_content),
+              source_block_id: block.source_block_id || masterBlock.id
+            };
           }
           return block;
         });
