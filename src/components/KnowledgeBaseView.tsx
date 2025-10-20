@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import type { KnowledgeTopic, KnowledgeSection, KnowledgeTile } from '../hooks/useKnowledgeBase';
 
 const KnowledgeBaseView: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const {
     topics,
     loading,
@@ -18,7 +18,8 @@ const KnowledgeBaseView: React.FC = () => {
     createTile,
     updateTile,
     deleteTile,
-  } = useKnowledgeBase(user?.id);
+    toggleShare,
+  } = useKnowledgeBase(user?.id, isAdmin);
 
   const [selectedTopic, setSelectedTopic] = useState<KnowledgeTopic | null>(null);
   const [selectedSection, setSelectedSection] = useState<KnowledgeSection | null>(null);
@@ -421,49 +422,87 @@ const KnowledgeBaseView: React.FC = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {topics.map(topic => (
-                  <div
-                    key={topic.id}
-                    className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/50 p-6 hover:shadow-2xl transition-all duration-500 group overflow-hidden hover:scale-105 cursor-pointer"
-                    onClick={() => setSelectedTopic(topic)}
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-lg text-gray-900 group-hover:text-purple-600 transition-colors duration-300 mb-2">
-                          {topic.title}
-                        </h3>
-                        <p className="text-gray-600 text-sm line-clamp-2 leading-relaxed">
-                          {topic.description}
-                        </p>
+                {topics.map(topic => {
+                  const isOwnTopic = topic.userId === user?.id;
+                  const isSharedFromAdmin = topic.createdByAdmin && !isOwnTopic;
+                  const canEdit = isOwnTopic;
+
+                  return (
+                    <div
+                      key={topic.id}
+                      className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/50 p-6 hover:shadow-2xl transition-all duration-500 group overflow-hidden hover:scale-105 cursor-pointer"
+                      onClick={() => setSelectedTopic(topic)}
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-bold text-lg text-gray-900 group-hover:text-purple-600 transition-colors duration-300">
+                              {topic.title}
+                            </h3>
+                            {isSharedFromAdmin && (
+                              <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
+                                Shared by Admin
+                              </span>
+                            )}
+                            {isAdmin && isOwnTopic && topic.isShared && (
+                              <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                                Shared
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-gray-600 text-sm line-clamp-2 leading-relaxed">
+                            {topic.description}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-1 ml-3">
+                          {isAdmin && isOwnTopic && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleShare(topic.id, !topic.isShared);
+                              }}
+                              className={`p-2 rounded-lg transition-all duration-300 ${
+                                topic.isShared
+                                  ? 'text-green-600 hover:bg-green-50'
+                                  : 'text-gray-500 hover:bg-gray-100'
+                              }`}
+                              title={topic.isShared ? 'Stop sharing' : 'Share with all users'}
+                            >
+                              <Brain className="w-4 h-4" />
+                            </button>
+                          )}
+                          {canEdit && (
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditTopic(topic);
+                                }}
+                                className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-300"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteTopic(topic.id);
+                                }}
+                                className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-1 ml-3">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditTopic(topic);
-                          }}
-                          className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-300"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteTopic(topic.id);
-                          }}
-                          className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+
+                      <div className="flex items-center justify-between text-sm text-gray-500 pt-3 border-t border-gray-100">
+                        <span>{topic.sections.length} sections</span>
+                        <span>Created {formatDateTime(topic.createdAt)}</span>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center justify-between text-sm text-gray-500 pt-3 border-t border-gray-100">
-                      <span>{topic.sections.length} sections</span>
-                      <span>Created {formatDateTime(topic.createdAt)}</span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -473,14 +512,21 @@ const KnowledgeBaseView: React.FC = () => {
         {selectedTopic && !selectedSection && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">Sections in "{selectedTopic.title}"</h2>
-              <button
-                onClick={() => setShowSectionForm(true)}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl flex items-center space-x-2 transition-all duration-300 shadow-lg"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add Section</span>
-              </button>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Sections in "{selectedTopic.title}"</h2>
+                {selectedTopic.createdByAdmin && selectedTopic.userId !== user?.id && (
+                  <p className="text-sm text-blue-600 mt-1">This is a shared topic from Admin (Read Only)</p>
+                )}
+              </div>
+              {selectedTopic.userId === user?.id && (
+                <button
+                  onClick={() => setShowSectionForm(true)}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl flex items-center space-x-2 transition-all duration-300 shadow-lg"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Section</span>
+                </button>
+              )}
             </div>
 
             {/* Section Form */}
@@ -552,49 +598,55 @@ const KnowledgeBaseView: React.FC = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {selectedTopic.sections.map(section => (
-                  <div
-                    key={section.id}
-                    className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/50 p-6 hover:shadow-2xl transition-all duration-500 group overflow-hidden hover:scale-105 cursor-pointer"
-                    onClick={() => setSelectedSection(section)}
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-lg text-gray-900 group-hover:text-blue-600 transition-colors duration-300 mb-2">
-                          {section.title}
-                        </h3>
-                        <p className="text-gray-600 text-sm line-clamp-3 leading-relaxed">
-                          {section.content}
-                        </p>
+                {selectedTopic.sections.map(section => {
+                  const canEditSection = selectedTopic.userId === user?.id;
+
+                  return (
+                    <div
+                      key={section.id}
+                      className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/50 p-6 hover:shadow-2xl transition-all duration-500 group overflow-hidden hover:scale-105 cursor-pointer"
+                      onClick={() => setSelectedSection(section)}
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-lg text-gray-900 group-hover:text-blue-600 transition-colors duration-300 mb-2">
+                            {section.title}
+                          </h3>
+                          <p className="text-gray-600 text-sm line-clamp-3 leading-relaxed">
+                            {section.content}
+                          </p>
+                        </div>
+                        {canEditSection && (
+                          <div className="flex items-center space-x-1 ml-3">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditSection(section);
+                              }}
+                              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-300"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteSection(section.id);
+                              }}
+                              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center space-x-1 ml-3">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditSection(section);
-                          }}
-                          className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-300"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteSection(section.id);
-                          }}
-                          className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+
+                      <div className="flex items-center justify-between text-sm text-gray-500 pt-3 border-t border-gray-100">
+                        <span>{section.tiles.length} tiles</span>
+                        <span>Created {formatDateTime(section.createdAt)}</span>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center justify-between text-sm text-gray-500 pt-3 border-t border-gray-100">
-                      <span>{section.tiles.length} tiles</span>
-                      <span>Created {formatDateTime(section.createdAt)}</span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -605,13 +657,15 @@ const KnowledgeBaseView: React.FC = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900">Tiles in "{selectedSection.title}"</h2>
-              <button
-                onClick={() => setShowTileForm(true)}
-                className="bg-gradient-to-r from-green-600 to-purple-600 hover:from-green-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl flex items-center space-x-2 transition-all duration-300 shadow-lg"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add Tile</span>
-              </button>
+              {selectedTopic && selectedTopic.userId === user?.id && (
+                <button
+                  onClick={() => setShowTileForm(true)}
+                  className="bg-gradient-to-r from-green-600 to-purple-600 hover:from-green-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl flex items-center space-x-2 transition-all duration-300 shadow-lg"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Tile</span>
+                </button>
+              )}
             </div>
 
             {/* Tile Form */}
@@ -726,33 +780,38 @@ const KnowledgeBaseView: React.FC = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {selectedSection.tiles.map(tile => (
-                  <div
-                    key={tile.id}
-                    className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/50 p-6 hover:shadow-2xl transition-all duration-500 group overflow-hidden hover:scale-105"
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-lg text-gray-900 group-hover:text-green-600 transition-colors duration-300 mb-2">
-                          {tile.title}
-                        </h4>
-                        <div className="w-6 h-0.5 bg-gradient-to-r from-green-500 to-purple-500 rounded-full"></div>
+                {selectedSection.tiles.map(tile => {
+                  const canEditTile = selectedTopic && selectedTopic.userId === user?.id;
+
+                  return (
+                    <div
+                      key={tile.id}
+                      className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/50 p-6 hover:shadow-2xl transition-all duration-500 group overflow-hidden hover:scale-105"
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-lg text-gray-900 group-hover:text-green-600 transition-colors duration-300 mb-2">
+                            {tile.title}
+                          </h4>
+                          <div className="w-6 h-0.5 bg-gradient-to-r from-green-500 to-purple-500 rounded-full"></div>
+                        </div>
+                        {canEditTile && (
+                          <div className="flex items-center space-x-1 ml-3">
+                            <button
+                              onClick={() => handleEditTile(tile)}
+                              className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-300"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteTile(tile.id)}
+                              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center space-x-1 ml-3">
-                        <button
-                          onClick={() => handleEditTile(tile)}
-                          className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-300"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteTile(tile.id)}
-                          className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
                     
                     <div className="mb-4">
                       <p className="text-gray-700 leading-relaxed whitespace-pre-wrap line-clamp-3 text-sm hover:text-gray-900 transition-colors">
@@ -815,7 +874,8 @@ const KnowledgeBaseView: React.FC = () => {
                       <span>{tile.content.length} chars</span>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

@@ -7,6 +7,9 @@ export interface KnowledgeTopic {
   description: string;
   createdAt: string;
   updatedAt: string;
+  isShared?: boolean;
+  createdByAdmin?: boolean;
+  userId: string;
   sections: KnowledgeSection[];
 }
 
@@ -29,7 +32,7 @@ export interface KnowledgeTile {
   updatedAt: string;
 }
 
-export function useKnowledgeBase(userId: string | undefined) {
+export function useKnowledgeBase(userId: string | undefined, isAdmin: boolean = false) {
   const [topics, setTopics] = useState<KnowledgeTopic[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,13 +40,14 @@ export function useKnowledgeBase(userId: string | undefined) {
     if (userId) {
       fetchTopics();
     }
-  }, [userId]);
+  }, [userId, isAdmin]);
 
   const fetchTopics = async () => {
     try {
       setLoading(true);
-      
-      const { data: topicsData, error: topicsError } = await supabase
+
+      // Fetch user's own topics
+      const { data: userTopicsData, error: userTopicsError } = await supabase
         .from('knowledge_topics')
         .select(`
           *,
@@ -55,12 +59,38 @@ export function useKnowledgeBase(userId: string | undefined) {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-      if (topicsError) throw topicsError;
+      if (userTopicsError) throw userTopicsError;
 
-      const topicsWithSections = (topicsData || []).map(topic => ({
+      // Fetch shared admin topics (if not admin)
+      let sharedTopicsData: any[] = [];
+      if (!isAdmin) {
+        const { data, error: sharedError } = await supabase
+          .from('knowledge_topics')
+          .select(`
+            *,
+            knowledge_sections (
+              *,
+              knowledge_tiles (*)
+            )
+          `)
+          .eq('is_shared', true)
+          .eq('created_by_admin', true)
+          .order('created_at', { ascending: false });
+
+        if (sharedError) throw sharedError;
+        sharedTopicsData = data || [];
+      }
+
+      // Combine both datasets
+      const allTopicsData = [...(userTopicsData || []), ...sharedTopicsData];
+
+      const topicsWithSections = allTopicsData.map(topic => ({
         id: topic.id,
         title: topic.title,
         description: topic.description,
+        userId: topic.user_id,
+        isShared: topic.is_shared,
+        createdByAdmin: topic.created_by_admin,
         createdAt: topic.created_at,
         updatedAt: topic.updated_at,
         sections: (topic.knowledge_sections || []).map((section: any) => ({
@@ -97,6 +127,8 @@ export function useKnowledgeBase(userId: string | undefined) {
           user_id: userId,
           title: topicData.title,
           description: topicData.description,
+          created_by_admin: isAdmin,
+          is_shared: false
         })
         .select()
         .single();
@@ -105,6 +137,9 @@ export function useKnowledgeBase(userId: string | undefined) {
 
       const newTopic: KnowledgeTopic = {
         id: data.id,
+        userId: data.user_id,
+        isShared: data.is_shared,
+        createdByAdmin: data.created_by_admin,
         title: data.title,
         description: data.description,
         createdAt: data.created_at,
@@ -343,6 +378,24 @@ export function useKnowledgeBase(userId: string | undefined) {
     }
   };
 
+  const toggleShare = async (topicId: string, isShared: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('knowledge_topics')
+        .update({ is_shared: isShared })
+        .eq('id', topicId);
+
+      if (error) throw error;
+
+      setTopics(prev => prev.map(topic =>
+        topic.id === topicId ? { ...topic, isShared } : topic
+      ));
+    } catch (error) {
+      console.error('Error toggling share:', error);
+      throw error;
+    }
+  };
+
   return {
     topics,
     loading,
@@ -355,6 +408,7 @@ export function useKnowledgeBase(userId: string | undefined) {
     createTile,
     updateTile,
     deleteTile,
+    toggleShare,
     refetch: fetchTopics,
   };
 }

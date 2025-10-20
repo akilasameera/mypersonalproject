@@ -115,7 +115,7 @@ const ConfiguratorTab: React.FC<ConfiguratorTabProps> = ({ projectId, isMasterPr
             image_url: masterBlock?.image_url || null,
             image_name: masterBlock?.image_name || null,
             image_size: masterBlock?.image_size || null,
-            is_read_only: !!masterBlock,
+            is_read_only: !!(masterBlock?.image_url || masterBlock?.text_content),
             source_block_id: masterBlock?.id || null
           };
         });
@@ -142,7 +142,24 @@ const ConfiguratorTab: React.FC<ConfiguratorTabProps> = ({ projectId, isMasterPr
           updatedAt: block.updated_at
         })));
       } else {
-        setBlocks(blocksData.map(block => ({
+        // Update existing blocks with master data if they have source_block_id
+        const blocksWithMasterData = blocksData.map(block => {
+          if (block.source_block_id) {
+            const masterBlock = masterBlocks.find(mb => mb.id === block.source_block_id);
+            if (masterBlock) {
+              return {
+                ...block,
+                image_url: masterBlock.image_url,
+                image_name: masterBlock.image_name,
+                image_size: masterBlock.image_size,
+                text_content: block.is_read_only ? masterBlock.text_content : block.text_content
+              };
+            }
+          }
+          return block;
+        });
+
+        setBlocks(blocksWithMasterData.map(block => ({
           id: block.id,
           configurationId: block.configuration_id,
           blockName: block.block_name,
