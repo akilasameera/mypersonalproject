@@ -130,6 +130,8 @@ export interface ConfiguratorBlock {
   imageName?: string;
   imageSize?: number;
   textContent: string;
+  isReadOnly?: boolean;
+  sourceBlockId?: string;
   createdAt: string;
   updatedAt: string;
 }

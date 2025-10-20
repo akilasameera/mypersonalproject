@@ -104,12 +104,21 @@ const ConfiguratorTab: React.FC<ConfiguratorTabProps> = ({ projectId, isMasterPr
       }
 
       if (!blocksData || blocksData.length === 0) {
-        const newBlocks: Partial<ConfiguratorBlock>[] = DEFAULT_BLOCK_NAMES.map((name, index) => ({
-          configuration_id: config.id,
-          block_name: name,
-          block_order: index + 1,
-          text_content: ''
-        }));
+        const newBlocks = DEFAULT_BLOCK_NAMES.map((name, index) => {
+          const masterBlock = masterBlocks.find(mb => mb.block_order === (index + 1));
+
+          return {
+            configuration_id: config.id,
+            block_name: name,
+            block_order: index + 1,
+            text_content: masterBlock?.text_content || '',
+            image_url: masterBlock?.image_url || null,
+            image_name: masterBlock?.image_name || null,
+            image_size: masterBlock?.image_size || null,
+            is_read_only: !!masterBlock,
+            source_block_id: masterBlock?.id || null
+          };
+        });
 
         const { data: createdBlocks, error: createBlocksError } = await supabase
           .from('configurator_blocks')
@@ -118,37 +127,35 @@ const ConfiguratorTab: React.FC<ConfiguratorTabProps> = ({ projectId, isMasterPr
 
         if (createBlocksError) throw createBlocksError;
 
-        setBlocks(createdBlocks.map(block => {
-          const masterBlock = masterBlocks.find(mb => mb.block_order === block.block_order);
-          return {
-            id: block.id,
-            configurationId: block.configuration_id,
-            blockName: block.block_name,
-            blockOrder: block.block_order,
-            imageUrl: masterBlock?.image_url || block.image_url,
-            imageName: masterBlock?.image_name || block.image_name,
-            imageSize: masterBlock?.image_size || block.image_size,
-            textContent: block.text_content,
-            createdAt: block.created_at,
-            updatedAt: block.updated_at
-          };
-        }));
+        setBlocks(createdBlocks.map(block => ({
+          id: block.id,
+          configurationId: block.configuration_id,
+          blockName: block.block_name,
+          blockOrder: block.block_order,
+          imageUrl: block.image_url,
+          imageName: block.image_name,
+          imageSize: block.image_size,
+          textContent: block.text_content,
+          isReadOnly: block.is_read_only,
+          sourceBlockId: block.source_block_id,
+          createdAt: block.created_at,
+          updatedAt: block.updated_at
+        })));
       } else {
-        setBlocks(blocksData.map(block => {
-          const masterBlock = masterBlocks.find(mb => mb.block_order === block.block_order);
-          return {
-            id: block.id,
-            configurationId: block.configuration_id,
-            blockName: block.block_name,
-            blockOrder: block.block_order,
-            imageUrl: masterBlock?.image_url || block.image_url,
-            imageName: masterBlock?.image_name || block.image_name,
-            imageSize: masterBlock?.image_size || block.image_size,
-            textContent: block.text_content,
-            createdAt: block.created_at,
-            updatedAt: block.updated_at
-          };
-        }));
+        setBlocks(blocksData.map(block => ({
+          id: block.id,
+          configurationId: block.configuration_id,
+          blockName: block.block_name,
+          blockOrder: block.block_order,
+          imageUrl: block.image_url,
+          imageName: block.image_name,
+          imageSize: block.image_size,
+          textContent: block.text_content,
+          isReadOnly: block.is_read_only,
+          sourceBlockId: block.source_block_id,
+          createdAt: block.created_at,
+          updatedAt: block.updated_at
+        })));
       }
     } catch (error) {
       console.error('Error loading configuration:', error);
@@ -209,7 +216,8 @@ const ConfiguratorTab: React.FC<ConfiguratorTabProps> = ({ projectId, isMasterPr
     try {
       setSaving(true);
 
-      const updates = blocks.map(block => ({
+      const editableBlocks = blocks.filter(block => !block.isReadOnly);
+      const updates = editableBlocks.map(block => ({
         id: block.id,
         text_content: block.textContent,
         updated_at: new Date().toISOString()
@@ -278,7 +286,16 @@ const ConfiguratorTab: React.FC<ConfiguratorTabProps> = ({ projectId, isMasterPr
               <div>
                 <h2 className="text-xl font-bold text-gray-900">Configurator</h2>
                 <p className="text-sm text-gray-600">
-                  {isMasterProject ? 'Master template for all projects' : 'Project-specific configuration'}
+                  {isMasterProject ? 'Master template for all projects' : (
+                    <>
+                      Project-specific configuration
+                      {blocks.filter(b => b.isReadOnly).length > 0 && (
+                        <span className="ml-2 text-blue-600 font-semibold">
+                          ({blocks.filter(b => b.isReadOnly).length} blocks from Master)
+                        </span>
+                      )}
+                    </>
+                  )}
                 </p>
               </div>
             </div>
@@ -307,9 +324,16 @@ const ConfiguratorTab: React.FC<ConfiguratorTabProps> = ({ projectId, isMasterPr
             {blocks.map((block) => (
               <div key={block.id} className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
                 <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3 border-b border-gray-200">
-                  <h3 className="text-base font-semibold text-gray-900">
-                    {block.blockOrder}. {block.blockName}
-                  </h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-base font-semibold text-gray-900">
+                      {block.blockOrder}. {block.blockName}
+                    </h3>
+                    {block.isReadOnly && (
+                      <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
+                        From Master (Read Only)
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
@@ -374,12 +398,22 @@ const ConfiguratorTab: React.FC<ConfiguratorTabProps> = ({ projectId, isMasterPr
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Configuration Details</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Configuration Details
+                      {block.isReadOnly && (
+                        <span className="ml-2 text-xs text-blue-600 font-normal">(Read Only - from Master Template)</span>
+                      )}
+                    </label>
                     <textarea
                       value={block.textContent}
-                      onChange={(e) => handleTextChange(block.id, e.target.value)}
-                      placeholder={`Enter configuration details for ${block.blockName}...`}
-                      className="w-full h-[32rem] px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+                      onChange={(e) => !block.isReadOnly && handleTextChange(block.id, e.target.value)}
+                      placeholder={block.isReadOnly ? 'This content is from Master template and cannot be edited' : `Enter configuration details for ${block.blockName}...`}
+                      disabled={block.isReadOnly}
+                      className={`w-full h-[32rem] px-4 py-3 border rounded-lg resize-none text-sm ${
+                        block.isReadOnly
+                          ? 'bg-gray-50 border-gray-200 text-gray-700 cursor-not-allowed'
+                          : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                      }`}
                     />
                   </div>
                 </div>
