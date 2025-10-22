@@ -146,7 +146,25 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
               Completed ({statusCounts.completed})
             </button>
           </div>
-          
+
+          {/* Visit Task Calendar Button */}
+          <a
+            href="https://flow.mypersonalprojects.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden lg:flex bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-6 rounded-2xl items-center space-x-2 transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transform hover:scale-105 group"
+          >
+            <span>Visit Task Calendar</span>
+            <svg
+              className="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </a>
+
           {/* Desktop Create Button */}
           <button
             onClick={handleCreateProject}
