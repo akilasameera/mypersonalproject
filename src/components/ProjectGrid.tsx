@@ -109,8 +109,8 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
           <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-blue-900 to-purple-700 bg-clip-text text-transparent">Projects</h1>
           <p className="text-gray-600 mt-1 sm:mt-2 text-base sm:text-lg">Manage your main projects and workflows</p>
         </div>
-        
-        {/* Status Filter and Create Button */}
+
+        {/* Status Filter, Visit Task Calendar Button, and Create Button */}
         <div className="flex flex-col space-y-3 lg:space-y-0 lg:flex-row lg:items-center lg:space-x-4">
           <div className="flex bg-gray-100/80 rounded-xl p-1 gap-1 overflow-x-auto backdrop-blur-xl border border-white/20 shadow-lg">
             <button
@@ -147,6 +147,24 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
             </button>
           </div>
 
+          {/* Visit Task Calendar Button - Desktop */}
+          <a
+            href="https://flow.mypersonalprojects.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden lg:inline-flex bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-6 rounded-2xl items-center space-x-2 transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transform hover:scale-105 group"
+          >
+            <span>Visit Task Calendar</span>
+            <svg
+              className="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </a>
+
           {/* Desktop Create Button */}
           <button
             onClick={handleCreateProject}
@@ -156,26 +174,6 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
             <span>New Project</span>
           </button>
         </div>
-      </div>
-
-      {/* Visit Task Calendar Button - Centered */}
-      <div className="flex justify-center mb-8">
-        <a
-          href="https://flow.mypersonalprojects.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-8 rounded-2xl inline-flex items-center space-x-3 transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transform hover:scale-105 group"
-        >
-          <span className="text-lg">Visit Task Calendar</span>
-          <svg
-            className="w-6 h-6 transform group-hover:translate-x-1 transition-transform duration-300"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-        </a>
       </div>
 
       {/* Floating Action Button for Mobile */}
