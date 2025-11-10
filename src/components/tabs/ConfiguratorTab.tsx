@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, Save, Loader, Image as ImageIcon, X } from 'lucide-react';
+import { Upload, Save, Loader, Image as ImageIcon, X, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { ConfiguratorBlock } from '../../types';
+import ConfigurationTable from '../ConfigurationTable';
 
 interface ConfiguratorTabProps {
   projectId: string;
@@ -32,6 +33,7 @@ const ConfiguratorTab: React.FC<ConfiguratorTabProps> = ({ projectId, isMasterPr
   const [saving, setSaving] = useState(false);
   const [uploadingBlock, setUploadingBlock] = useState<number | null>(null);
   const [selectedImage, setSelectedImage] = useState<{ url: string; title: string } | null>(null);
+  const [previewMode, setPreviewMode] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
     loadConfiguration();
@@ -468,27 +470,56 @@ const ConfiguratorTab: React.FC<ConfiguratorTabProps> = ({ projectId, isMasterPr
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Configuration Details
-                      {isMasterProject && block.isReadOnly && (
-                        <span className="ml-2 text-xs text-blue-600 font-normal">(Read Only - from Master Template)</span>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Configuration Details
+                        {isMasterProject && block.isReadOnly && (
+                          <span className="ml-2 text-xs text-blue-600 font-normal">(Read Only - from Master Template)</span>
+                        )}
+                      </label>
+                      {block.textContent && !isMasterProject && (
+                        <button
+                          onClick={() => setPreviewMode(prev => ({
+                            ...prev,
+                            [block.id]: !prev[block.id]
+                          }))}
+                          className="flex items-center space-x-1 px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition-colors"
+                        >
+                          {previewMode[block.id] ? (
+                            <>
+                              <EyeOff className="w-3 h-3" />
+                              <span>Edit</span>
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="w-3 h-3" />
+                              <span>Preview</span>
+                            </>
+                          )}
+                        </button>
                       )}
-                    </label>
-                    <textarea
-                      value={block.textContent}
-                      onChange={(e) => {
-                        const isEditable = isMasterProject ? !block.isReadOnly : true;
-                        if (isEditable) handleTextChange(block.id, e.target.value);
-                      }}
-                      onPaste={(e) => handlePaste(block.id, e)}
-                      placeholder={isMasterProject && block.isReadOnly ? 'This content is from Master template and cannot be edited' : `Enter configuration details for ${block.blockName}...`}
-                      disabled={isMasterProject && block.isReadOnly}
-                      className={`w-full h-[32rem] px-4 py-3 border rounded-lg resize-none text-sm font-mono ${
-                        isMasterProject && block.isReadOnly
-                          ? 'bg-gray-50 border-gray-200 text-gray-700 cursor-not-allowed'
-                          : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-                      }`}
-                    />
+                    </div>
+                    {previewMode[block.id] ? (
+                      <div className="w-full h-[32rem] px-4 py-3 border rounded-lg border-gray-300 bg-white overflow-auto">
+                        <ConfigurationTable content={block.textContent} />
+                      </div>
+                    ) : (
+                      <textarea
+                        value={block.textContent}
+                        onChange={(e) => {
+                          const isEditable = isMasterProject ? !block.isReadOnly : true;
+                          if (isEditable) handleTextChange(block.id, e.target.value);
+                        }}
+                        onPaste={(e) => handlePaste(block.id, e)}
+                        placeholder={isMasterProject && block.isReadOnly ? 'This content is from Master template and cannot be edited' : `Enter configuration details or paste Excel table for ${block.blockName}...`}
+                        disabled={isMasterProject && block.isReadOnly}
+                        className={`w-full h-[32rem] px-4 py-3 border rounded-lg resize-none text-sm font-mono ${
+                          isMasterProject && block.isReadOnly
+                            ? 'bg-gray-50 border-gray-200 text-gray-700 cursor-not-allowed'
+                            : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                        }`}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
