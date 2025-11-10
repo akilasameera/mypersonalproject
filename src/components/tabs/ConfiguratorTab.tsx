@@ -237,6 +237,51 @@ const ConfiguratorTab: React.FC<ConfiguratorTabProps> = ({ projectId, isMasterPr
     ));
   };
 
+  const handlePaste = (blockId: string, e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const isEditable = isMasterProject ? blocks.find(b => b.id === blockId)?.isReadOnly === false : true;
+
+    if (!isEditable) {
+      e.preventDefault();
+      return;
+    }
+
+    const clipboardData = e.clipboardData;
+    const text = clipboardData.getData('text/plain');
+    const html = clipboardData.getData('text/html');
+
+    if (html && (html.includes('<table') || html.includes('<tr'))) {
+      e.preventDefault();
+
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = html;
+      const table = tempDiv.querySelector('table');
+
+      if (table) {
+        const rows = Array.from(table.querySelectorAll('tr'));
+        const tableText = rows
+          .map(row => {
+            const cells = Array.from(row.querySelectorAll('td, th'));
+            return cells.map(cell => cell.textContent?.trim() || '').join('\t');
+          })
+          .join('\n');
+
+        const textarea = e.currentTarget;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const beforeText = textarea.value.substring(0, start);
+        const afterText = textarea.value.substring(end);
+        const newText = beforeText + tableText + afterText;
+
+        handleTextChange(blockId, newText);
+
+        setTimeout(() => {
+          textarea.selectionStart = textarea.selectionEnd = start + tableText.length;
+          textarea.focus();
+        }, 0);
+      }
+    }
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -435,9 +480,10 @@ const ConfiguratorTab: React.FC<ConfiguratorTabProps> = ({ projectId, isMasterPr
                         const isEditable = isMasterProject ? !block.isReadOnly : true;
                         if (isEditable) handleTextChange(block.id, e.target.value);
                       }}
+                      onPaste={(e) => handlePaste(block.id, e)}
                       placeholder={isMasterProject && block.isReadOnly ? 'This content is from Master template and cannot be edited' : `Enter configuration details for ${block.blockName}...`}
                       disabled={isMasterProject && block.isReadOnly}
-                      className={`w-full h-[32rem] px-4 py-3 border rounded-lg resize-none text-sm ${
+                      className={`w-full h-[32rem] px-4 py-3 border rounded-lg resize-none text-sm font-mono ${
                         isMasterProject && block.isReadOnly
                           ? 'bg-gray-50 border-gray-200 text-gray-700 cursor-not-allowed'
                           : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
