@@ -288,8 +288,11 @@ const ConfiguratorTab: React.FC<ConfiguratorTabProps> = ({ projectId, isMasterPr
     try {
       setSaving(true);
 
-      const editableBlocks = blocks.filter(block => !block.isReadOnly);
-      const updates = editableBlocks.map(block => ({
+      const blocksToSave = isMasterProject
+        ? blocks.filter(block => !block.isReadOnly)
+        : blocks;
+
+      const updates = blocksToSave.map(block => ({
         id: block.id,
         text_content: block.textContent,
         updated_at: new Date().toISOString()
