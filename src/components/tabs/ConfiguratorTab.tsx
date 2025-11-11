@@ -504,7 +504,11 @@ const ConfiguratorTab: React.FC<ConfiguratorTabProps> = ({ projectId, isMasterPr
                     </div>
                     {previewMode[block.id] ? (
                       <div className="w-full h-[32rem] px-4 py-3 border rounded-lg border-gray-300 bg-white overflow-auto">
-                        <ConfigurationTable content={block.textContent} />
+                        <ConfigurationTable
+                          content={block.textContent}
+                          onContentChange={(newContent) => handleTextChange(block.id, newContent)}
+                          isEditable={!isMasterProject || !block.isReadOnly}
+                        />
                       </div>
                     ) : (
                       <textarea
